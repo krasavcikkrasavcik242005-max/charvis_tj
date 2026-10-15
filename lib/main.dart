@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:flutter_tts/flutter_tts.dart';
 
 void main() {
   runApp(const CharvisApp());
@@ -32,8 +31,6 @@ class VoiceAssistantScreen extends StatefulWidget {
 
 class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
   late stt.SpeechToText _speech;
-  late FlutterTts _flutterTts;
-  
   bool _isListening = false;
   String _textSpoken = "Тугмаро пахш кунед ва гап занед...";
   String _aiResponse = "Ассистент омода аст...";
@@ -42,23 +39,9 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
-    _flutterTts = FlutterTts();
-    _initTts();
   }
 
-  // Танзими овози ассистент
-  void _initTts() async {
-    await _flutterTts.setLanguage("tg-TJ"); // Забони тоҷикӣ ё русӣ вобаста ба дастгирӣ
-    await _flutterTts.setPitch(1.0);
-    await _flutterTts.setSpeechRate(0.5);
-  }
-
-  // Функсияи сухан гуфтани ассистент
-  Future<void> _speak(String text) async {
-    await _flutterTts.speak(text);
-  }
-
-  // Коркарди саволҳо ва ҷавобҳои сунъӣ
+  // Коркарди саволҳо
   void _processCommand(String command) {
     String lowerCmd = command.toLowerCase();
     String response = "";
@@ -66,33 +49,32 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
     if (lowerCmd.contains("салом") || lowerCmd.contains("алому алайкум")) {
       response = "Салом! Шуморо диданам хурсандам. Чӣ хизмат кунам?";
     } else if (lowerCmd.contains("аҳвол") || lowerCmd.contains("ченӣ")) {
-      response = "Шукр, ҳамааш хуб аст. Шумо چӣ хел истодаед?";
+      response = "Шукр, ҳамааш хуб аст. Шумо чӣ хел истодаед?";
     } else if (lowerCmd.contains("соат чанд") || lowerCmd.contains("вақт")) {
       String timeNow = TimeOfDay.fromDateTime(DateTime.now()).format(context);
       response = "Ҳоло соат $timeNow аст.";
     } else if (lowerCmd.contains("ном") || lowerCmd.contains("кистӣ")) {
-      response = "Ман Charvis TJ ҳастам, ассисти овозии тоҷикии шумо.";
+      response = "Ман Charvis TJ ҳастам, ассистенти овозии тоҷикии шумо.";
     } else {
-      response = "Ман ин суханро шунидам: '$command'. Аммо ҳанӯз маънояшро намефаҳмам.";
+      response = "Ман ин суханро шунидам: '$command'.";
     }
 
     setState(() {
       _aiResponse = response;
     });
-    _speak(response);
   }
 
   // Оғоз ё қатъ кардани гӯшкунӣ
   void _listen() async {
     if (!_isListening) {
-      bool available = await _speech.initialize(
+      bool available = await stt.SpeechToText().initialize(
         onStatus: (status) => print('Status: $status'),
         onError: (error) => print('Error: $error'),
       );
       if (available) {
         setState(() => _isListening = true);
         _speech.listen(
-          localeId: "tg_TJ", // Муайян кардани забони тоҷикӣ
+          localeId: "tg_TJ",
           onResult: (val) => setState(() {
             _textSpoken = val.recognizedWords;
             if (val.hasConfidenceRating && val.confidence > 0) {
@@ -120,7 +102,6 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Қисми нишон додани посухи ассистент
             Card(
               elevation: 4,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
@@ -143,8 +124,6 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
               ),
             ),
             const SizedBox(height: 40),
-            
-            // Қисми матни шунидашуда
             Text(
               _textSpoken,
               textAlign: TextAlign.center,
@@ -155,8 +134,6 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
               ),
             ),
             const Spacer(),
-
-            // Тугмаи зебои микрофон бо аниматсияи ранга
             GestureDetector(
               onTap: _listen,
               child: AnimatedContainer(
