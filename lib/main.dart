@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Ассистенти Овозӣ',
+      title: 'Charvis TJ',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -51,7 +51,7 @@ class _VoiceScreenState extends State<VoiceScreen> {
           onResult: (val) => setState(() {
             _text = val.recognizedWords;
           }),
-          localeId: "tg_TJ", // Забони тоҷикӣ
+          localeId: "tg_TJ",
         );
       }
     } else {
@@ -64,14 +64,15 @@ class _VoiceScreenState extends State<VoiceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ассистенти Овозии Тоҷикӣ'),
+        title: const Text('Charvis TJ - Ассистенти Овозӣ'),
+        centerTitle: true,
       ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Text(
             _text,
-            style: const TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
         ),
