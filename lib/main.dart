@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const CharvisApp());
+  runApp(const MyApp());
 }
 
-class CharvisApp extends StatelessWidget {
-  const CharvisApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -14,49 +14,55 @@ class CharvisApp extends StatelessWidget {
       title: 'Charvis TJ',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        useMaterial3: true,
       ),
       home: const HomeScreen(),
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _counter = 0;
+
+  void _incrementCounter() {
+    setState(() {
+      _counter++;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Charvis TJ'),
-        centerTitle: true,
-        backgroundColor: Colors.blueAccent,
-        foregroundColor: Colors.white,
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(
-              Icons.android,
-              size: 100,
-              color: Colors.green,
+          children: <Widget>[
+            const Text(
+              'Шумо тугмаро чанд бор пахш кардед:',
+              style: TextStyle(fontSize: 16),
+              textAlign: TextAlign.center,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 10),
             Text(
-              'Хуш омадед ба Charvis TJ!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Барнома бомуваффақият сохта шуд.',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              '$_counter',
+              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.blue),
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _incrementCounter,
+        tooltip: "Пахш кардан",
+        child: const Icon(Icons.add),
       ),
     );
   }
