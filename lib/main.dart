@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   runApp(const CharvisApp());
@@ -41,29 +40,23 @@ class _HomeScreenState extends State<HomeScreen> {
     _speech = stt.SpeechToText();
   }
 
-  // Функсия барои дархости иҷозат ва оғози гӯшкунӣ
-  Future<void> _listen() async {
+  void _listen() async {
     if (!_isListening) {
-      // Иҷозати микрофонро аз система мепурсад
-      var status = await Permission.microphone.request();
-      
-      if (status.isGranted) {
-        bool available = await _speech.initialize(
-          onStatus: (val) => print('Status: $val'),
-          onError: (val) => print('Error: $val'),
+      bool available = await _speech.initialize(
+        onStatus: (val) => print('Status: $val'),
+        onError: (val) => print('Error: $val'),
+      );
+      if (available) {
+        setState(() => _isListening = true);
+        _speech.listen(
+          localeId: 'tg_TJ',
+          onResult: (val) => setState(() {
+            _text = val.recognizedWords;
+          }),
         );
-        if (available) {
-          setState(() => _isListening = true);
-          _speech.listen(
-            localeId: 'tg_TJ', // Танзими забони тоҷикӣ
-            onResult: (val) => setState(() {
-              _text = val.recognizedWords;
-            }),
-          );
-        }
       } else {
         setState(() {
-          _text = 'Иҷозати истифодаи микрофон дода нашуд!';
+          _text = 'Микрофон дастрас нест ё иҷозат дода нашуд';
         });
       }
     } else {
@@ -76,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Charvis TJ - Ассистенти Овозӣ'),
+        title: const Text('Charvis TJ – Ассистенти Овозӣ'),
         centerTitle: true,
         backgroundColor: Colors.indigo,
         elevation: 0,
