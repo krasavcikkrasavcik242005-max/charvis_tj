@@ -30,5 +30,8 @@ jobs:
       - name: Create Android folder
         run: flutter create . --platforms=android
 
+      - name: Fix minSdk for speech_to_text
+        run: sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' android/app/build.gradle
+
       - name: Build APK
         run: flutter build apk --release
