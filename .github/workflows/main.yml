@@ -25,7 +25,7 @@ jobs:
 
       - name: Enable Android platform and generate files
         run: |
-          flutter create --platforms=android .
+          flutter create --project-name charvis_tj --platforms=android .
 
       - name: Install dependencies
         run: flutter pub get
