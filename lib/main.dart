@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const CharvisApp());
@@ -12,7 +14,7 @@ class CharvisApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Charvis TJ',
+      title: 'Charvis TJ AI',
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
@@ -33,8 +35,12 @@ class VoiceAssistantScreen extends StatefulWidget {
 class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
   late stt.SpeechToText _speech;
   bool _isListening = false;
+  bool _isLoading = false;
   String _textSpoken = "Барои оғоз тугмаи микрофонро пахш кунед...";
-  String _aiResponse = "Charvis омода аст... Рафиқи шумо онлайн аст!";
+  String _aiResponse = "Charvis AI омода аст... Саволатонро диҳед!";
+
+  // Дар инҷо калиди API-и худро мегузоред
+  final String apiKey = "YOUR_GEMINI_API_KEY";
 
   @override
   void initState() {
@@ -42,30 +48,55 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
     _speech = stt.SpeechToText();
   }
 
-  // Обработка голосовых команд
-  void _processCommand(String command) {
-    String lowerCmd = command.toLowerCase();
-    String response = "";
-
-    if (lowerCmd.contains("салом") || lowerCmd.contains("сал") || lowerCmd.contains("привет")) {
-      response = "Салом! Шуморо диданам хеле хурсандам. Имрӯз ба шумо чӣ гуна кӯмак расонам?";
-    } else if (lowerCmd.contains("аҳвол") || lowerCmd.contains("хол") || lowerCmd.contains("как дела")) {
-      response = "Шукр, ҳамааш хуб аст! Барномаи шумо дар ҳолати корӣ ва онлайн қарор дорад.";
-    } else if (lowerCmd.contains("соат") || lowerCmd.contains("вақт") || lowerCmd.contains("время")) {
-      String timeNow = TimeOfDay.fromDateTime(DateTime.now()).format(context);
-      response = "Ҳоло вақти маҳаллӣ соат $timeNow аст.";
-    } else if (lowerCmd.contains("ном") || lowerCmd.contains("кистӣ") || lowerCmd.contains("кто ты")) {
-      response = "Ман Charvis TJ ҳастам, ассистенти овозии рақамии шумо.";
-    } else {
-      response = "Ман ин суханро шунидам: '$command'.";
-    }
-
+  // Фиристодани савол ба Gemini AI API ва гирифтани ҷавоби зеҳнӣ
+  Future<void> _askGeminiAI(String prompt) async {
     setState(() {
-      _aiResponse = response;
+      _isLoading = true;
+      _aiResponse = "Charvis фикр карда истодааст...";
     });
+
+    try {
+      final url = Uri.parse(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey');
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          "contents": [
+            {
+              "parts": [
+                {
+                  "text": "Шумо ассистенти овозии ҳушманди тоҷикӣ бо номи 'Charvis TJ' ҳастед. Ба саволи зерин ба забони тоҷикӣ кӯтоҳ, ширин ва бо зеҳни баланд ҷавоб диҳед: $prompt"
+                }
+              ]
+            }
+          ]
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        String aiText = data['candidates'][0]['content']['parts'][0]['text'];
+        setState(() {
+          _aiResponse = aiText.trim();
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _aiResponse = "Хатогӣ дар пайвастшавӣ ба сервер.";
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _aiResponse = "Хатогии интернет: $e";
+        _isLoading = false;
+      });
+    }
   }
 
-  // Включение и сброс состояния микрофона
+  // Фаъолсозии овоз
   void _listen() async {
     if (!_isListening) {
       bool available = await _speech.initialize(
@@ -78,18 +109,20 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
       );
 
       if (available) {
-        setState(() => _isListening = true);
+        setState(() {
+          _isListening = true;
+          _textSpoken = "Гӯш истодаам...";
+        });
+
         _speech.listen(
           onResult: (val) {
             setState(() {
               _textSpoken = val.recognizedWords;
-              if (val.recognizedWords.isNotEmpty) {
-                _processCommand(_textSpoken);
-              }
             });
-            if (val.finalResult) {
+            if (val.recognizedWords.isNotEmpty && val.finalResult) {
               _speech.stop();
               setState(() => _isListening = false);
+              _askGeminiAI(_textSpoken); // Равон кардани матни гуфташуда ба AI
             }
           },
         );
@@ -104,7 +137,8 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Charvis TJ (Online Assistant)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text('Charvis TJ (AI Powered)',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.indigo,
         centerTitle: true,
       ),
@@ -113,10 +147,12 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Карточкаи ҷавоби AI
             Card(
               elevation: 6,
               shadowColor: Colors.indigo.withOpacity(0.3),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               child: Padding(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
@@ -124,27 +160,37 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.smart_toy, color: Colors.indigo),
+                        Icon(Icons.auto_awesome, color: Colors.indigo),
                         SizedBox(width: 8),
                         Text(
-                          "Ҷавоби Charvis:",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.indigo),
+                          "Ҷавоби Charvis AI:",
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.indigo),
                         ),
                       ],
                     ),
                     const SizedBox(height: 15),
-                    Text(
-                      _aiResponse,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 20, color: Colors.black87, height: 1.3),
-                    ),
+                    _isLoading
+                        const CircularProgressIndicator()
+                        : Text(
+                            _aiResponse,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                fontSize: 18,
+                                color: Colors.black87,
+                                height: 1.4),
+                          ),
                   ],
                 ),
               ),
             ),
             const SizedBox(height: 40),
+            // Матни шунидашудаи овозӣ
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -161,10 +207,11 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
               ),
             ),
             const Spacer(),
+            // Тугмаи микрофон
             GestureDetector(
               onTap: _listen,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 200),
                 height: 95,
                 width: 95,
                 decoration: BoxDecoration(
@@ -172,7 +219,8 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
                   color: _isListening ? Colors.red : Colors.indigo,
                   boxShadow: [
                     BoxShadow(
-                      color: (_isListening ? Colors.red : Colors.indigo).withOpacity(0.5),
+                      color: (_isListening ? Colors.red : Colors.indigo)
+                          .withOpacity(0.5),
                       blurRadius: 25,
                       spreadRadius: 8,
                     ),
@@ -187,8 +235,11 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
             ),
             const SizedBox(height: 25),
             Text(
-              _isListening ? "Лутфан гап занед, гӯш истодаам..." : "Барои сӯҳбат тугмаро пахш кунед",
-              style: TextStyle(color: Colors.grey[600], fontSize: 14, fontWeight: FontWeight.w500),
+              _isListening ? "Сабт шуда истодааст..." : "Барои сӯҳбат тугмаро пахш кунед",
+              style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 20),
           ],
