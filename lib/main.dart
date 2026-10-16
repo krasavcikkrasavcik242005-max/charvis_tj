@@ -38,8 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _aiResponse = "Салом! Ман Charvis AI. Чӣ тавр ба шумо кӯмак кунам?";
   bool _isLoading = false;
 
-  // Калиди API аз скриншоти шумо
-  final String _apiKey = "AQ.Ab8RN6J5qznvRuS416MVXCgbvWir-kvoxSk..."; 
+  // Ваш полный API ключ со скриншота
+  final String _apiKey = "AQ.Ab8RN6J5qznvRuS416MVXCgbvWir-kvoxSk"; 
 
   @override
   void initState() {
@@ -135,7 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Қуттии ҷавоби ИИ
+            // Ответ от ИИ
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16.0),
@@ -182,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 30),
-            // Матни аз овоз гирифташуда
+            // Распознанный текст
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
@@ -199,7 +199,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const Spacer(),
-            // Тугмаи микрофон
+            // Кнопка микрофона
             GestureDetector(
               onTap: _listen,
               child: AnimatedContainer(
