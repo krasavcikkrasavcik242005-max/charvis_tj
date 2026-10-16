@@ -41,22 +41,21 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
     _speech = stt.SpeechToText();
   }
 
-  // Коркарди саволҳо
   void _processCommand(String command) {
     String lowerCmd = command.toLowerCase();
     String response = "";
 
-    if (lowerCmd.contains("салом") || lowerCmd.contains("алому алайкум")) {
+    if (lowerCmd.contains("салом") || lowerCmd.contains("привет")) {
       response = "Салом! Шуморо диданам хурсандам. Чӣ хизмат кунам?";
-    } else if (lowerCmd.contains("аҳвол") || lowerCmd.contains("ченӣ")) {
+    } else if (lowerCmd.contains("аҳвол") || lowerCmd.contains("как дела")) {
       response = "Шукр, ҳамааш хуб аст. Шумо чӣ хел истодаед?";
-    } else if (lowerCmd.contains("соат чанд") || lowerCmd.contains("вақт")) {
+    } else if (lowerCmd.contains("соат") || lowerCmd.contains("время")) {
       String timeNow = TimeOfDay.fromDateTime(DateTime.now()).format(context);
       response = "Ҳоло соат $timeNow аст.";
-    } else if (lowerCmd.contains("ном") || lowerCmd.contains("кистӣ")) {
-      response = "Ман Charvis TJ ҳастам, ассистенти овозии тоҷикии шумо.";
+    } else if (lowerCmd.contains("ном") || lowerCmd.contains("кто ты")) {
+      response = "Ман Charvis TJ ҳастам, ассистенти овозии шумо.";
     } else {
-      response = "Ман ин суханро шунидам: '$command'.";
+      response = "Ман инро шунидам: '$command'.";
     }
 
     setState(() {
@@ -64,20 +63,18 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
     });
   }
 
-  // Оғоз ё қатъ кардани гӯшкунӣ
   void _listen() async {
     if (!_isListening) {
-      bool available = await stt.SpeechToText().initialize(
+      bool available = await _speech.initialize(
         onStatus: (status) => print('Status: $status'),
         onError: (error) => print('Error: $error'),
       );
       if (available) {
         setState(() => _isListening = true);
         _speech.listen(
-          localeId: "tg_TJ",
           onResult: (val) => setState(() {
             _textSpoken = val.recognizedWords;
-            if (val.hasConfidenceRating && val.confidence > 0) {
+            if (val.recognizedWords.isNotEmpty) {
               _processCommand(_textSpoken);
             }
           }),
