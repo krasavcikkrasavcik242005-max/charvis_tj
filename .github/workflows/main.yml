@@ -29,6 +29,14 @@ jobs:
       - name: Recreate Android Project Files
         run: flutter create . --platforms=android
 
+      - name: Fix Min SDK Version in Gradle
+        run: |
+          BUILD_GRADLE="android/app/build.gradle"
+          if [ -f "$BUILD_GRADLE" ]; then
+            sed -i 's/minSdkVersion flutter.minSdkVersion/minSdkVersion 21/g' "$BUILD_GRADLE"
+            sed -i 's/minSdkVersion.*/minSdkVersion 21/' "$BUILD_GRADLE"
+          fi
+
       - name: Install dependencies
         run: flutter pub get
 
