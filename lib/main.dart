@@ -14,7 +14,7 @@ class CharvisApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Charvis TJ',
+      title: 'Charvis TJ AI',
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
@@ -37,9 +37,9 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
   bool _isListening = false;
   bool _isLoading = false;
   String _textSpoken = "Барои оғоз тугмаи микрофонро пахш кунед...";
-  String _aiResponse = "Charvis омода аст... Саволи худро диҳед!";
+  String _aiResponse = "Charvis AI омода аст... Саволатонро диҳед!";
 
-  // Ваш API-ключ от Gemini (при необходимости можно заменить)
+  // Здесь можно оставить стандартный ключ или позже вставить свой
   final String apiKey = "YOUR_GEMINI_API_KEY";
 
   @override
@@ -48,6 +48,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
     _speech = stt.SpeechToText();
   }
 
+  // Запрос к Gemini AI
   Future<void> _askGeminiAI(String prompt) async {
     setState(() {
       _isLoading = true;
@@ -66,7 +67,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
             {
               "parts": [
                 {
-                  "text": "Шумо ассистенти овозии тоҷикӣ бо номи 'Charvis TJ' ҳастед. Ба саволи зерин ба забони тоҷикӣ кӯтоҳ ва ширин ҷавоб диҳед: $prompt"
+                  "text": "Шумо ассистенти овозии ҳушманди тоҷикӣ бо номи 'Charvis TJ' ҳастед. Ба саволи зерин ба забони тоҷикӣ кӯтоҳ, ширин ва бо зеҳни баланд ҷавоб диҳед: $prompt"
                 }
               ]
             }
@@ -95,6 +96,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
     }
   }
 
+  // Запуск записи голоса
   void _listen() async {
     if (!_isListening) {
       bool available = await _speech.initialize(
@@ -135,7 +137,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Charvis TJ AI',
+        title: const Text('Charvis TJ (AI Powered)',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.indigo,
         centerTitle: true,
@@ -149,4 +151,19 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
               elevation: 6,
               shadowColor: Colors.indigo.withOpacity(0.3),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular
+                  borderRadius: BorderRadius.circular(20)),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  children: [
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.auto_awesome, color: Colors.indigo),
+                        SizedBox(width: 8),
+                        Text(
+                          "Ҷавоби Charvis AI:",
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color:
