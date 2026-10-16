@@ -431,7 +431,7 @@ $memoryContext
             ),
             const SizedBox(height: 12),
             GestureDetector(
-              onTag: _listen,
+              onTap: _listen,
               child: CircleAvatar(
                 radius: 35,
                 backgroundColor: _isListening ? Colors.red : Colors.indigo,
