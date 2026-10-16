@@ -107,9 +107,7 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
 
       if (available) {
         setState(() {
-          _isListening = {
-            true;
-          };
+          _isListening = true; // Исправлено
           _textSpoken = "Гӯш истодаам...";
         });
 
