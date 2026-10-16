@@ -39,7 +39,6 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
   String _textSpoken = "Барои оғоз тугмаи микрофонро пахш кунед...";
   String _aiResponse = "Charvis AI омода аст... Саволатонро диҳед!";
 
-  // Здесь можно оставить стандартный ключ или позже вставить свой
   final String apiKey = "YOUR_GEMINI_API_KEY";
 
   @override
@@ -48,7 +47,6 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
     _speech = stt.SpeechToText();
   }
 
-  // Запрос к Gemini AI
   Future<void> _askGeminiAI(String prompt) async {
     setState(() {
       _isLoading = true;
@@ -96,7 +94,6 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
     }
   }
 
-  // Запуск записи голоса
   void _listen() async {
     if (!_isListening) {
       bool available = await _speech.initialize(
@@ -110,7 +107,9 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
 
       if (available) {
         setState(() {
-          _isListening = true;
+          _isListening = {
+            true;
+          };
           _textSpoken = "Гӯш истодаам...";
         });
 
@@ -166,4 +165,82 @@ class _VoiceAssistantScreenState extends State<VoiceAssistantScreen> {
                           style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color:
+                              color: Colors.indigo),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    _isLoading
+                        ? const CircularProgressIndicator()
+                        : Text(
+                            _aiResponse,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                                fontSize: 18,
+                                color: Colors.black87,
+                                height: 1.4),
+                          ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: Text(
+                _textSpoken,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: _isListening ? Colors.redAccent : Colors.grey[700],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+            const Spacer(),
+            GestureDetector(
+              onTap: _listen,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: 95,
+                width: 95,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _isListening ? Colors.red : Colors.indigo,
+                  boxShadow: [
+                    BoxShadow(
+                      color: (_isListening ? Colors.red : Colors.indigo)
+                          .withOpacity(0.5),
+                      blurRadius: 25,
+                      spreadRadius: 8,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  _isListening ? Icons.mic : Icons.mic_none,
+                  color: Colors.white,
+                  size: 45,
+                ),
+              ),
+            ),
+            const SizedBox(height: 25),
+            Text(
+              _isListening ? "Сабт шуда истодааст..." : "Барои сӯҳбат тугмаро пахш кунед",
+              style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
