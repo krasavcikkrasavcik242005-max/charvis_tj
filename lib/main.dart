@@ -85,7 +85,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Реҷаи Волидайн ва Блоки Ахлоқӣ
   Future<void> _toggleParentalControl() async {
     setState(() {
       _isParentalControlActive = !_isParentalControlActive;
@@ -95,7 +94,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _speak("Реҷаи волидайн $status");
   }
 
-  // Ҳолати Хоб ва Ҷавоби Худкор ба СМС
   Future<void> _handleSleepAndAutoReply() async {
     setState(() {
       _isSleepMode = true;
@@ -104,7 +102,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _speak("Бале дӯсти ман, ором истироҳат кун. Ман ба паёмҳо ҷавоб медиҳам, ки шумо банд ҳастед.");
   }
 
-  // Сканкунии Антивирус
   Future<void> _runAntivirusScan() async {
     setState(() {
       _isScanning = true;
@@ -121,7 +118,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _speak("Сканкунӣ анҷом ёфт. Ҳамаи дастгоҳҳо бехатаранд!");
   }
 
-  // Зеркашии мусиқӣ ва филмҳо
   Future<void> _handleMediaDownload(String command) async {
     setState(() {
       _isLoading = true;
@@ -139,47 +135,39 @@ class _HomeScreenState extends State<HomeScreen> {
     _speak("Зеркашӣ бомуваффақият ба анҷом расид!");
   }
 
-  // Идоракунии дастгоҳҳо ва фармонҳо
   Future<bool> _executeDeviceCommand(String command) async {
     String cmd = command.toLowerCase();
 
-    // Филтри ахлоқӣ
     if (cmd.contains("фаҳшо") || cmd.contains("беахлоқӣ")) {
-      _respondAndSpeak("Бубахшед, аммо ман чунин дархостҳоро иҷро намекуnam. Ахлоқи баланд дар мақоми аввал аст!");
+      _respondAndSpeak("Бубахшед, аммо ман чунин дархостҳоро иҷро намекунам. Ахлоқи баланд дар мақоми аввал аст!");
       return true;
     }
 
-    // Волидайн
     if (cmd.contains("волидайн") || cmd.contains("кӯдак")) {
       await _toggleParentalControl();
       return true;
     }
 
-    // Хоб ва СМС
     if (cmd.contains("хоб") || cmd.contains("истироҳат") || cmd.contains("смс") || cmd.contains("занг")) {
       await _handleSleepAndAutoReply();
       return true;
     }
 
-    // Мусиқӣ ё Филм
     if (cmd.contains("мусиқи") || cmd.contains("tiktok") || cmd.contains("филм") || cmd.contains("кино") || cmd.contains("сериал")) {
       await _handleMediaDownload(command);
       return true;
     }
 
-    // Антивирус
     if (cmd.contains("вирус") || cmd.contains("скан") || cmd.contains("хакер")) {
       await _runAntivirusScan();
       return true;
     }
 
-    // Бедоршавӣ бо ном
     if (cmd.contains("чарвис") && cmd.split(" ").length <= 3) {
       _respondAndSpeak("Бале, дӯсти ман, ман инҷо ҳастам! Гӯш мекунам.");
       return true;
     }
 
-    // Фонарик
     if (cmd.contains("фонарик") || cmd.contains("чироқ")) {
       try {
         if (cmd.contains("ёш") || cmd.contains("гирон") || cmd.contains("фурӯзон")) {
@@ -203,7 +191,6 @@ class _HomeScreenState extends State<HomeScreen> {
       return true;
     }
 
-    // Дастгоҳҳои дигар (TV, PC, Car)
     if (cmd.contains("телевизор") || cmd.contains("tv")) {
       _respondAndSpeak("Фармони телевизор иҷро шуд.");
       return true;
