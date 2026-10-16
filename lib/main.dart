@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package0package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -38,8 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _aiResponse = "Салом! Ман Charvis AI. Чӣ тавр ба шумо кӯмак кунам?";
   bool _isLoading = false;
 
-  // Ваш полный API ключ со скриншота
-  final String _apiKey = "AQ.Ab8RN6J5qznvRuS416MVXCgbvWir-kvoxSk"; 
+  // Калид мустақиман аз GitHub Secrets сохта мешавад
+  final String _apiKey = const String.fromEnvironment('GEMINI_API_KEY');
 
   @override
   void initState() {
@@ -50,12 +50,23 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _listen() async {
     if (!_isListening) {
       bool available = await _speech.initialize(
-        onStatus: (val) => print('onStatus: $val'),
+        onStatus: (val) {
+          if (val == 'done' || val == 'notListening') {
+            if (_isListening) {
+              setState(() => _isListening = false);
+              if (_userText.isNotEmpty && _userText != "Барои сӯҳбат тугмаро пахш кунед") {
+                _sendToGemini(_userText);
+              }
+            }
+          }
+        },
         onError: (val) => print('onError: $val'),
       );
       if (available) {
         setState(() => _isListening = true);
         _speech.listen(
+          pauseFor: const Duration(milliseconds: 1500),
+          listenFor: const Duration(seconds: 10),
           onResult: (val) => setState(() {
             _userText = val.recognizedWords;
           }),
@@ -71,6 +82,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _sendToGemini(String prompt) async {
+    if (_apiKey.isEmpty) {
+      setState(() {
+        _aiResponse = "Калиди API пайваст нашудааст!";
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _aiResponse = "Дар ҳоли фикрронӣ...";
@@ -88,12 +106,15 @@ class _HomeScreenState extends State<HomeScreen> {
             {
               "parts": [
                 {
-                  "text":
-                      "Ту ассистенти овозии Charvis TJ ҳастӣ. Ба савол танҳо бо забони тоҷикӣ, дуруст, равон ва кӯтоҳ ҷавоб деҳ. Савол: $prompt"
+                  "text": "Ассистент Charvis TJ. Кӯтоҳ (максимум 1-2 ҷумла) ва фаврӣ ба тоҷикӣ ҷавоб деҳ: $prompt"
                 }
               ]
             }
-          ]
+          ],
+          "generationConfig": {
+            "maxOutputTokens": 100,
+            "temperature": 0.5
+          }
         }),
       );
 
@@ -135,7 +156,6 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            // Ответ от ИИ
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16.0),
@@ -160,82 +180,4 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         'Ҷавоби Charvis AI:',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.indigo,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _isLoading
-                      ? const CircularProgressIndicator()
-                      : Text(
-                          _aiResponse,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.black87,
-                          ),
-                        ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-            // Распознанный текст
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.indigo.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                _userText,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.indigo,
-                ),
-              ),
-            ),
-            const Spacer(),
-            // Кнопка микрофона
-            GestureDetector(
-              onTap: _listen,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                height: 80,
-                width: 80,
-                decoration: BoxDecoration(
-                  color: _isListening ? Colors.redAccent : Colors.indigo,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: (_isListening ? Colors.redAccent : Colors.indigo)
-                          .withOpacity(0.4),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  _isListening ? Icons.mic : Icons.mic_none,
-                  color: Colors.white,
-                  size: 36,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _isListening
-                  ? "Шунида истодаам..."
-                  : "Барои сӯҳбат тугмаро пахш кунед",
-              style: const TextStyle(color: Colors.grey, fontSize: 14),
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
+                          fontSize: 1
