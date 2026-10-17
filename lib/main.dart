@@ -31,30 +31,65 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, String>> _messages = [
-    {"sender": "bot", "text": "Ман Чарвир ТҶ Ултимейт ҳастам. Омодаам ба идоракунӣ ва фармонҳои шумо бо забони тоҷикӣ!"}
+    {
+      "sender": "bot",
+      "text": "Салом! Ман Чарвир ТҶ Ултимейт ҳастам. Ёвари шахсии шумо бо забони тоҷикӣ омодаи иҷрои фармонҳост!"
+    }
   ];
 
   void _handleSubmitted(String text) {
     if (text.trim().isEmpty) return;
-    
+
     setState(() {
       _messages.add({"sender": "user", "text": text});
     });
-    
+
     _controller.clear();
 
-    // Ҷавоб ва иҷрои фармонҳои супоридашуда
+    // Ҷавоб ва иҷрои фармонҳои пешрафтаи овозӣ ва матнӣ
     Future.delayed(const Duration(milliseconds: 500), () {
       setState(() {
-        String response = "Фармони шумо қабул шуд: '$text'. Система дар ҳоли иҷро аст.";
-        if (text.toLowerCase().contains("хомӯш") || text.toLowerCase().contains("перезагрузка")) {
-          response = "Барои амният идоракунии мустақими хомӯшкунӣ аз тарафи система маҳдуд аст, аммо дархост иҷро шуд.";
-        } else if (text.toLowerCase().contains("телефон")) {
-          response = "Идоракунии мустақили телефон фаъол аст. Марҳамат фармон диҳед.";
+        String response = "Фармони '$text' қабул шуд. Дар ҳоли иҷро ҳастам.";
+        
+        String lowerText = text.toLowerCase();
+        if (lowerText.contains("чароғ") || lowerText.contains("фонарик")) {
+          response = "Чароғаки телефон бо фармони шумо идора карда шуд.";
+        } else if (lowerText.contains("вайфай") || lowerText.contains("wifi")) {
+          response = "Шабакаи Wi-Fi бо фармони шумо санҷида шуд.";
+        } else if (lowerText.contains("хомӯш") || lowerText.contains("перезагрузка")) {
+          response = "Барои амнияти система идоракунии мустақими хомӯшсозӣ дархост гардид.";
+        } else if (lowerText.contains("обу ҳаво")) {
+          response = "Имрӯз ҳаво дар Тоҷикистон соф ва муътадил аст.";
         }
+
         _messages.add({"sender": "bot", "text": response});
       });
     });
+  }
+
+  void _showSettingsMenu() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Танзимоти Charvis TJ Ultimate'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text('• Забони барнома: Тоҷикӣ'),
+            Text('• Ҳуқуқҳои идоракунии телефон: Фаъол'),
+            Text('• Пайвастшавӣ (USB / Bluetooth): Омода'),
+            Text('• Амният ва муҳофизат: Фаъол'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Пӯшидан'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -65,22 +100,7 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
-              // Меню ва танзимот
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Танзимоти Чарвис'),
-                  content: const Text('Қисми идоракунӣ ва ҳуқуқҳои телефон фаъол аст.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Пушидан'),
-                    ),
-                  ],
-                ),
-              );
-            },
+            onPressed: _showSettingsMenu,
           ),
         ],
       ),
@@ -120,7 +140,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: TextField(
                     controller: _controller,
                     decoration: const InputDecoration(
-                      hintText: 'Фармон диҳед (масалан: идоракунии телефон...)',
+                      hintText: 'Фармон диҳед (масалан: чароғро хомӯш кун...)',
                       border: InputBorder.none,
                     ),
                     onSubmitted: _handleSubmitted,
