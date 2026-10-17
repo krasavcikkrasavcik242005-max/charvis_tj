@@ -1,6 +1,7 @@
-name: charvis_tj
-description: "A new Flutter project."
+name: charvis_tj_ultimate
+description: "Charvis TJ Ultimate Voice Assistant and System Manager"
 publish_to: 'none'
+
 version: 1.0.0+1
 
 environment:
@@ -9,11 +10,16 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  speech_to_text: ^6.3.0
+
+  # Китобхонаҳо барои фаъолияти овозӣ, интернет, пайвастшавӣ ва ҳуқуқҳо
+  speech_to_text: ^6.6.0
   flutter_tts: ^3.8.5
   http: ^1.2.0
   url_launcher: ^6.2.4
-  shared_preferences: ^2.2.2
+  permission_handler: ^11.3.0
+
+  # Иконаҳои стандартӣ
+  cupertino_icons: ^1.0.6
 
 dev_dependencies:
   flutter_test:
@@ -22,3 +28,12 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Пайваст кардани папкаи тасвирҳо ва фонҳо ба лоиҳа
+  assets:
+    - assets/images/
+    - assets/images/tajik_icon.png
+    - assets/images/charvis_bg_neon.png
+    - assets/images/charvis_matrix_cyber.png
+    - assets/images/charvis_hologram.png
+    - assets/images/charvis_dark_core.png
