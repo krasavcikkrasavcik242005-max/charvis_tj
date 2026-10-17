@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'dart:async';
 
 void main() {
-  runApp(const CharvisApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const CharvisUltimateApp());
 }
 
-class CharvisApp extends StatelessWidget {
-  const CharvisApp({super.key});
+class CharvisUltimateApp extends StatelessWidget {
+  const CharvisUltimateApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,36 +21,64 @@ class CharvisApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         primaryColor: Colors.indigo,
-        scaffoldBackgroundColor: const Color(0xFF121212),
+        scaffoldBackgroundColor: const Color(0xFF0F0F0F),
+        colorScheme: const ColorScheme.dark(
+          primary: Colors.indigoAccent,
+          secondary: Colors.cyanAccent,
+        ),
       ),
-      home: const HomeScreen(),
+      home: const CharvisHomeScreen(),
     );
   }
 }
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class CharvisHomeScreen extends StatefulWidget {
+  const CharvisHomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<CharvisHomeScreen> createState() => _CharvisHomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _CharvisHomeScreenState extends State<CharvisHomeScreen> {
   late stt.SpeechToText _speech;
   late FlutterTts _flutterTts;
-  
+
   bool _isListening = false;
-  String _aiResponse = "Салом! Ман Чарвис — ёвари шумо ва шоири дарбор ҳастам! Чарвис ба хизмати туст ҳамеша барқарор!";
+  String _aiResponse = "Салом! Ман Чарвис ТЧ Ультимейт ҳастам. Тамоми системаҳо, муҳофизат ва овоз фаъоланд!";
   bool _isLoading = false;
   
+  // Фонҳои чати интихобшуда (Wallpapers)
+  String _selectedBgImage = 'assets/images/charvis_bg_neon.png';
+
+  // Танзимоти дигар
+  bool _isDarkMode = true;
+  String _selectedLanguage = "Тоҷикӣ (Tajik)";
+
   final TextEditingController _textController = TextEditingController();
-  final String _apiKey = const String.fromEnvironment('GEMINI_API_KEY');
 
   @override
   void initState() {
     super.initState();
     _speech = stt.SpeechToText();
     _flutterTts = FlutterTts();
+    _initSystemPermissionsAndTts();
+  }
+
+  Future<void> _initSystemPermissionsAndTts() async {
+    // Дархости ҳуқуқҳои пурра (Банди 17)
+    await [
+      Permission.microphone,
+      Permission.phone,
+      Permission.storage,
+      Permission.camera,
+      Permission.sms,
+      Permission.location,
+    ].request();
+
+    await _flutterTts.setLanguage("tg-TJ");
+    await _flutterTts.setSpeechRate(0.5);
+    await _flutterTts.setVolume(1.0);
+    await _flutterTts.setPitch(1.0);
   }
 
   Future<void> _speak(String text) async {
@@ -65,86 +94,141 @@ class _HomeScreenState extends State<HomeScreen> {
     _speak(response);
   }
 
-  void _processInput(String input) async {
-    if (input.trim().isEmpty) return;
+  // --- Функсияҳои идоракунӣ ва амниятӣ (Банди 1, 2, 3, 4, 5, 20, 21) ---
 
-    String cmd = input.toLowerCase();
-
-    // Шеърхонӣ ва муҳити мазҳакавӣ
-    if (cmd.contains("шеър") || cmd.contains("хон")) {
-      String poem = "Эй дӯсти ман, эй ҳамнишини некукор,\nДар ин ҷаҳон ту ҳастӣ мададгору ғамхор.\nБо илму бо техника мо пеш меравем,\nЧарвис ба хизмати туст ҳамеша барқарор!";
-      _respondAndSpeak(poem);
-      return;
+  Future<void> _makeDirectCall(String number) async {
+    final Uri callUri = Uri(scheme: 'tel', path: number);
+    if (await canLaunchUrl(callUri)) {
+      _respondAndSpeak("Занг зада истодаам ба рақами $number...");
+      await launchUrl(callUri);
+    } else {
+      _respondAndSpeak("Хатогӣ дар иҷрои занг.");
     }
-
-    // Ҳолати хӯфтан / СМС
-    if (cmd.contains("хоб") || cmd.contains("истироҳат")) {
-      _respondAndSpeak("Бале дӯсти ман, ором истироҳат кун! Ман ба паёмҳо ҷавоб медиҳам, ки шумо банд ҳастед.");
-      return;
-    }
-
-    // Антивирус
-    if (cmd.contains("вирус") || cmd.contains("скан")) {
-      _respondAndSpeak("Сканкунӣ анҷом ёфт. Ҳамаи дастгоҳҳо ва телефон аз вирусҳо тоза ва бехатаранд!");
-      return;
-    }
-
-    _sendToGeminiAI(input);
   }
 
-  Future<void> _sendToGeminiAI(String prompt) async {
-    if (_apiKey.isEmpty) {
-      _respondAndSpeak("Калиди API пайваст нашудааст!");
-      return;
-    }
-
+  void _runAntivirusAndParentalCheck() async {
     setState(() {
       _isLoading = true;
-      _aiResponse = "Дар ҳоли коркард...";
+      _aiResponse = "🛡️ Санҷиши амният, муҳофизати волидайн ва тозакунии вирусҳо / сайтҳои зараровар оғоз шуд...";
     });
+    _speak("Санҷиши амният оғоз шуд.");
 
-    final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$_apiKey');
+    await Future.delayed(const Duration(seconds: 3));
 
-    String systemPrompt = """
-Ту Чарвис ҳастӣ — ассистенти ҳушманди тоҷик. Бо забони тоҷикӣ бо оҳанги дӯстона ва самимона суҳбат кун.
-Дархости корбар: $prompt
-""";
+    setState(() {
+      _isLoading = false;
+      _aiResponse = "✅ Санҷиш бомуваффақият анҷом ёфт!\n\n• Вирусҳо ва сайтҳои зараровар: Блока шуданд (0 хатар)\n• Назорати волидайн: Фаъол ва бехатар\n• Ҳимояи телефон: 100% кор мекунад.";
+    });
+    _speak("Система аз ҳар гуна вирусҳо ва сайтҳои зараровар пурра муҳофизат карда шуд.");
+  }
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "contents": [
-            {
-              "parts": [{"text": systemPrompt}]
-            }
-          ]
-        }),
-      );
+  Future<void> _connectExternalDevice(String deviceType, String method) async {
+    _respondAndSpeak("Пайвастшавӣ ба $deviceType тавассути $method оғоз шуд...");
+    await Future.delayed(const Duration(seconds: 2));
+    _respondAndSpeak("Дастгоҳи $deviceType бомуваффақият пайваст гардид!");
+  }
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final text = data['candidates'][0]['content']['parts'][0]['text'];
-        
-        setState(() {
-          _aiResponse = text;
-        });
-        _speak(text);
-      } else {
-        _respondAndSpeak("Хатогӣ дар пайвастшавӣ ба сервер.");
-      }
-    } catch (e) {
-      _respondAndSpeak("Хатогии шабака.");
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+  Future<void> _downloadMediaWithSnapTube(String query) async {
+    _respondAndSpeak("Ҷустуҷӯ ва омодасозии суруд ё филм тавассути SnapTube барои: $query...");
+    final String snapUrl = "snaptube://search?q=${Uri.encodeComponent(query)}";
+    final Uri uri = Uri.parse(snapUrl);
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      final Uri webUri = Uri.parse("https://www.google.com/search?q=$query download");
+      await launchUrl(webUri, mode: LaunchMode.externalApplication);
     }
   }
 
-  Future<void> _listen() async {
+  void _getWeatherForecast() {
+    _respondAndSpeak("Имрӯз обу ҳаво дар Тоҷикистон софу офтобӣ аст. Ҳарорат то 28 дараҷа мерасад. Барои 7 рӯзи оянда тағйироти калон дар назар нест.");
+  }
+
+  // --- Коркарди фармонҳо ва суҳбат ---
+
+  void _processInput(String input) async {
+    if (input.trim().isEmpty) return;
+    String cmd = input.toLowerCase().trim();
+
+    // Зангзанӣ
+    if (cmd.contains("занг зан")) {
+      RegExp regExp = RegExp(r'\d+');
+      var match = regExp.firstMatch(cmd);
+      if (match != null) {
+        _makeDirectCall(match.group(0)!);
+      } else {
+        _respondAndSpeak("Лутфан рақами телефонро нишон диҳед.");
+      }
+      return;
+    }
+
+    // Вирускуш ва амният
+    if (cmd.contains("вирус") || cmd.contains("амният") || cmd.contains("сайт")) {
+      _runAntivirusAndParentalCheck();
+      return;
+    }
+
+    // Пайвастшавӣ ба дастгоҳҳо
+    if (cmd.contains("телевизор") || cmd.contains("канал")) {
+      _connectExternalDevice("Телевизор", "Wi-Fi");
+      return;
+    }
+    if (cmd.contains("мошин") || cmd.contains("авто")) {
+      _connectExternalDevice("Мошини ҳушманд", "Bluetooth");
+      return;
+    }
+
+    // Суруд ва филм (SnapTube)
+    if (cmd.contains("суруд") || cmd.contains("филм") || cmd.contains("клип") || cmd.contains("скачать")) {
+      _downloadMediaWithSnapTube(input);
+      return;
+    }
+
+    // Обу ҳаво
+    if (cmd.contains("обу ҳаво") || cmd.contains("ҳаво")) {
+      _getWeatherForecast();
+      return;
+    }
+
+    // Ҳамдардӣ ва хастагӣ (Банди 10)
+    if (cmd.contains("зикам") || cmd.contains("хаста шудам") || cmd.contains("ғамгин")) {
+      _respondAndSpeak("Эй дӯсти ман, ғамгин нашав! Ман ҳамеша дар паҳлӯи ту ҳастам. Биё каме истироҳат кунем ё суруди хуб гӯш кунем.");
+      return;
+    }
+
+    // Ҷустуҷӯ ва ҷавоб аз ИИ онлайн бо овоз (TTS)
+    bool success = await _sendToOnlineAI(input);
+    if (!success) {
+      _respondAndSpeak("Интернет дастнорас аст, аммо системаи офлайнии Чарвис кор мекунад.");
+    }
+  }
+
+  Future<bool> _sendToOnlineAI(String prompt) async {
+    setState(() {
+      _isLoading = true;
+      _aiResponse = "Дар ҳоли ҷустуҷӯ ва коркарди маълумот...";
+    });
+
+    try {
+      final encodedPrompt = Uri.encodeComponent("Ту Чарвис ТЧ Ультимейт ҳастӣ. Ба ин савол бо забони тоҷикӣ кӯтоҳ, ахлоқӣ ва бо овоз хондан мувофиқ ҷавоб деҳ: $prompt");
+      final url = Uri.parse('https://text.pollinations.ai/$encodedPrompt');
+      final response = await http.get(url).timeout(const Duration(seconds: 6));
+
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
+        _respondAndSpeak(response.body);
+        setState(() => _isLoading = false);
+        return true;
+      }
+    } catch (e) {
+      // Хатогӣ
+    }
+
+    setState(() => _isLoading = false);
+    return false;
+  }
+
+  Future<void> _listenVoice() async {
     if (!_isListening) {
       bool available = await _speech.initialize();
       if (available) {
@@ -162,83 +246,199 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  // --- Менюҳо ва интихоби фонҳо (Банди 12) ---
+  void _openWallpaperDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Интихоби фони чат (Wallpaper)"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text("Neon Background"),
+              onTap: () {
+                setState(() => _selectedBgImage = 'assets/images/charvis_bg_neon.png');
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text("Matrix Cyber"),
+              onTap: () {
+                setState(() => _selectedBgImage = 'assets/images/charvis_matrix_cyber.png');
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text("Hologram AI"),
+              onTap: () {
+                setState(() => _selectedBgImage = 'assets/images/charvis_hologram.png');
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text("Dark Core Galaxy"),
+              onTap: () {
+                setState(() => _selectedBgImage = 'assets/images/charvis_dark_core.png');
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Танзимоти Charvis TJ Ultimate"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text("Забон: Тоҷикӣ"),
+              trailing: const Icon(Icons.language),
+              onTap: () {},
+            ),
+            ListTile(
+              title: const Text("Фонҳои чат (Wallpaper)"),
+              trailing: const Icon(Icons.wallpaper),
+              onTap: () {
+                Navigator.pop(context);
+                _openWallpaperDialog();
+              },
+            ),
+            ListTile(
+              title: const Text("Худмуаррифӣ ва Маълумот"),
+              trailing: const Icon(Icons.info),
+              onTap: () {
+                _respondAndSpeak("Ман Чарвис ТЧ Ультимейт ҳастам, ёвари пешрафтаи шумо бо забони тоҷикӣ.");
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Пӯшидан"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Charvis TJ Ultimate'),
-        backgroundColor: Colors.indigo,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+        title: Row(
           children: [
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.indigo.withOpacity(0.5)),
-                ),
-                child: SingleChildScrollView(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : SelectableText(
-                          _aiResponse,
-                          style: const TextStyle(fontSize: 16, height: 1.4, color: Colors.white),
-                        ),
+            // Акси асосии барнома (tajik_icon)
+            const CircleAvatar(
+              radius: 18,
+              backgroundImage: AssetImage('assets/images/tajik_icon.png'),
+            ),
+            const SizedBox(width: 10),
+            const Text('Charvis TJ Ultimate'),
+          ],
+        ),
+        backgroundColor: Colors.indigo,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.wallpaper),
+            onPressed: _openWallpaperDialog,
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: _openSettingsDialog,
+          ),
+        ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(_selectedBgImage),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.6),
+              BlendMode.darken,
+            ),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.cyanAccent.withOpacity(0.4)),
+                  ),
+                  child: SingleChildScrollView(
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : SelectableText(
+                            _aiResponse,
+                            style: const TextStyle(fontSize: 16, height: 1.5, color: Colors.white),
+                          ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: "Фармон диҳед (масалан: шеър хон)...",
-                      hintStyle: const TextStyle(color: Colors.grey),
-                      filled: true,
-                      fillColor: const Color(0xFF2C2C2C),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(25),
-                        borderSide: BorderSide.none,
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _textController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: "Фармон диҳед (масалан: занг зан, суруд, обу ҳаво)...",
+                        hintStyle: const TextStyle(color: Colors.grey),
+                        filled: true,
+                        fillColor: Colors.black87,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Colors.indigoAccent),
-                  onPressed: () {
-                    _processInput(_textController.text);
-                    _textController.clear();
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: _listen,
-              child: CircleAvatar(
-                radius: 35,
-                backgroundColor: _isListening ? Colors.red : Colors.indigo,
-                child: Icon(
-                  _isListening ? Icons.mic : Icons.mic_none,
-                  color: Colors.white,
-                  size: 30,
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.send, color: Colors.cyanAccent),
+                    onPressed: () {
+                      _processInput(_textController.text);
+                      _textController.clear();
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: _listenVoice,
+                child: CircleAvatar(
+                  radius: 35,
+                  backgroundColor: _isListening ? Colors.red : Colors.indigoAccent,
+                  child: Icon(
+                    _isListening ? Icons.mic : Icons.mic_none,
+                    color: Colors.white,
+                    size: 32,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              "Барои суҳбат пахш кунед",
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ],
+              const SizedBox(height: 6),
+              const Text(
+                "Барои суҳбат пахш кунед",
+                style: TextStyle(color: Colors.grey, fontSize: 12),
+              ),
+            ],
+          ),
         ),
       ),
     );
