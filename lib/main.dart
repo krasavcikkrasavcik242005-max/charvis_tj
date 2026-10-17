@@ -42,7 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String _aiResponse = "Салом! Ман Чарвис — ёвари шумо ва шоири дарбор ҳастам! Чарвис ба хизмати туст ҳамеша барқарор!";
   bool _isLoading = false;
   
-  List<String> _userMemoryHistory = [];
   final TextEditingController _textController = TextEditingController();
   final String _apiKey = const String.fromEnvironment('GEMINI_API_KEY');
 
@@ -152,7 +151,6 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() => _isListening = true);
         _speech.listen(
           onResult: (val) => setState(() {
-            _userText = val.recognizedWords;
             _textController.text = val.recognizedWords;
           }),
         );
